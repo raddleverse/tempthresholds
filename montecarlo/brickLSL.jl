@@ -91,6 +91,8 @@ and return time x ens arrays for brick components
 function get_brickGMSL_zip(gmslfile::String, rcp::Union{String, Number})
 
     results_dir = joinpath(@__DIR__, "data", "lslr")
+    println(results_dir)
+    
     filepath_AIS = joinpath(results_dir,"projections_csv/RCP$(rcp)/projections_antarctic_RCP$(rcp)_sneasybrick.csv")
     filepath_GSIC = joinpath(results_dir,"projections_csv/RCP$(rcp)/projections_glaciers_RCP$(rcp)_sneasybrick.csv")
     filepath_GIS = joinpath(results_dir,"projections_csv/RCP$(rcp)/projections_greenland_RCP$(rcp)_sneasybrick.csv")
@@ -105,6 +107,7 @@ function get_brickGMSL_zip(gmslfile::String, rcp::Union{String, Number})
        !isfile(filepath_MAP) | !isfile(filepath_temp)
         url = "https://zenodo.org/record/6626335/files/sneasybrick_projections_csv.zip"
         download(url, gmslfile)
+        isdir(results_dir) || mkpath(results_dir)
         run(pipeline(`unzip $(gmslfile) -d $(results_dir)`));
     end
 
@@ -374,8 +377,9 @@ function brick_lsl(rcp,segIDs,brickfile,n,low=5,high=95,ystart=2010,yend=2100,ts
     lonlat = get_lonlat(segIDs)
     (lsl,gmsl) = downscale_brick(brickGMSL, lonlat, brickEnsInds, ystart, yend, tstep)
     temps = brickGMSL[8][:,brickEnsInds]
+    years = brickGMSL[1]
 
-    return lsl,gmsl,brickEnsInds,temps
+    return lsl,gmsl,brickEnsInds,temps,years
 end
 
 ##==============================================================================

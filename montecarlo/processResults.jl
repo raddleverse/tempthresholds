@@ -7,7 +7,7 @@
 
 # Functions to process CIAM data and make plots
 
-function procGlobalOutput(glob,gmsl,inds,brickfile,rcp,noRetreat,outfile=false,tstart=2010,tend=2100)
+function procGlobalOutput(glob,gmsl,temp2100,inds,brickfile,rcp,noRetreat,outfile=false,tstart=2010,tend=2100)
 
     # Get Global NPV
     npv = glob
@@ -26,7 +26,7 @@ function procGlobalOutput(glob,gmsl,inds,brickfile,rcp,noRetreat,outfile=false,t
         lab="No Retreat"
     end
 
-    df1 = DataFrame([npv gmsl2100], :auto)
+    df1 = DataFrame([npv gmsl2100 transpose(temp2100)], :auto)
     #df1[:brick]="Fast Dynamics"
     df1[!,:retreat] = fill(lab, size(df1)[1])
 
@@ -37,7 +37,7 @@ function procGlobalOutput(glob,gmsl,inds,brickfile,rcp,noRetreat,outfile=false,t
     #outdf = [df1;df2]
     outdf = df1
 
-    rename!(outdf,[:npv,:gmsl2100,:retreat])
+    rename!(outdf,[:npv,:gmsl2100,:temp2100,:retreat])
     outdf[!,:brickEnsInd] = inds
 
     if outfile==false

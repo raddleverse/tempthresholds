@@ -46,6 +46,11 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
         gmsl    =lsl[2]
         ensInds =lsl[3] # Indices of original BRICK array
         temps   =lsl[4] # Full temperature time series
+        years   =lsl[5]
+        # reference temperatures to 1995-2014 mean
+        ref_temps = mean(eachrow(temps[findall(t->t in (1995:2014), years), :]))
+        temps_norm = temps - repeat(transpose(ref_temps), size(temps)[1],1)
+        temps_norm_2100 = temps_norm[findall(t->t==2100, years),:]
 
     elseif trial_params[:low] == trial_params[:high]
         lslr = repeat(lsl[1],outer=(trial_params[:n], 1, 1))
@@ -62,7 +67,6 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
                             fixed = adaptRegime[:fixed], noRetreat = adaptRegime[:noRetreat],
                             allowMaintain = adaptRegime[:allowMaintain], popinput = adaptRegime[:popval],
                             surgeoption = adaptRegime[:surgeoption])
-#    update_param!(m,:popinput,adaptRegime[:popval])
 
     # get the segments and their corresponding World Bank regions
     dfSR = CSV.read("./data/segments_regions_WB.csv", DataFrame)
@@ -116,7 +120,7 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
     outtsname= joinpath(postprocessing_outputdir, "globalts_$(rcp)_$(runname).csv")
 
     CSV.write(outtrialsname, outtrials)
-    procGlobalOutput(globalNPV,gmsl,ensInds,trial_params[:brickfile],rcp,adaptRegime[:noRetreat],outnpvname)
+    procGlobalOutput(globalNPV,gmsl,temps_norm_2100,ensInds,trial_params[:brickfile],rcp,adaptRegime[:noRetreat],outnpvname)
     CSV.write(outtsname, outts)
     CSV.write(outrgnname, outregionNPV)
 
