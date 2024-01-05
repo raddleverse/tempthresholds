@@ -69,7 +69,7 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
                             surgeoption = adaptRegime[:surgeoption])
 
     # get the segments and their corresponding World Bank regions
-    dfSR = CSV.read("./data/segments_regions_WB.csv", DataFrame)
+    dfSR = CSV.read("../data/segments_regions_WB.csv", DataFrame)
     dfSR[!,"ids"] = [parse(Int64,replace(i, r"[^0-9]"=> "")) for i in dfSR[!,"segments"]]
 
     # unique World Bank regions
