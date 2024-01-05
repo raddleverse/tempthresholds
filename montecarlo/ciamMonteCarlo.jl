@@ -47,8 +47,8 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
         ensInds =lsl[3] # Indices of original BRICK array
         temps   =lsl[4] # Full temperature time series
         years   =lsl[5]
-        # reference temperatures to 1995-2014 mean
-        ref_temps = mean(eachrow(temps[findall(t->t in (1995:2014), years), :]))
+        # reference temperatures to 1850-1900 mean
+        ref_temps = mean(eachrow(temps[findall(t->t in (1850:1900), years), :]))
         temps_norm = temps - repeat(transpose(ref_temps), size(temps)[1],1)
         temps_norm_2100 = temps_norm[findall(t->t==2100, years),:]
 

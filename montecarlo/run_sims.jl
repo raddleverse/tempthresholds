@@ -1,3 +1,6 @@
+using Pkg
+Pkg.instantiate()
+
 using Mimi
 using MimiCIAM
 using Query
@@ -25,7 +28,7 @@ ssp_files = Dict(1 => "IIASAGDP_SSP1_v9_130219",
                  5 => "IIASAGDP_SSP5_v9_130219")
 popinput = 0                          # population density input data (only 0 is supported currently)
 ssp_rcp_scenarios = [(1,26), (2,45), (4,60), (5,85)]  # what combinations of SSP (first) and RCP (second)?
-nensemble = 50                      # how many ensemble members for the Monte Carlo?
+nensemble = 105                      # how many ensemble members for the Monte Carlo?
 surgeoption = 0  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 1 = GTSR-corrected D-C; 2 = GTSR nearest data points)
 
 for (ssp, rcp) in ssp_rcp_scenarios
