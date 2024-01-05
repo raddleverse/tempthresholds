@@ -53,11 +53,6 @@ function procSegResults(m,seg,lsl,inds,brickfile,rcp,noRetreat,tstart=2010,tend=
     segIDs = m[:slrcost,:segID]
     segNames =segID_to_seg(segIDs,segmap)
 
-    ensInds_fd = findall(x->x in fd_inds,inds)
-    ensInds_nofd = findall(x ->!(x in fd_inds),inds)
-    indsFd = inds[ensInds_fd]
-    indsNoFd = inds[ensInds_nofd]
-
     npv=seg[1]
     opt2050=seg[2]
     lev2050=seg[3]
@@ -66,71 +61,14 @@ function procSegResults(m,seg,lsl,inds,brickfile,rcp,noRetreat,tstart=2010,tend=
   #  lsl2050=lsl45[:,5,:]
   #  lsl2100=lsl45[:,10,:]
 
-    lsl2050fd = lsl2050[indsFd,:]
-    lsl2050nofd = lsl2050[indsNoFd,:]
-    lsl2100fd = lsl2100[indsFd,:]
-    lsl2100nofd = lsl2100[indsNoFd,:]
-
-    gmslFd = gmsl[indsFd]
-    gmslNoFd = gmsl[indsNoFd]
-
-    npvFd = npv[indsFd,:]
-    npvNoFd = npv[indsNoFd,:]
-
-    opt2050_Fd = opt2050[indsFd,:]
-    opt2050_noFd = opt2050[indsNoFd,:]
-
-    lev2050_Fd = lev2050[indsFd,:]
-    lev2050_noFd = lev2050[indsNoFd,:]
-
-    opt2100_Fd = opt2100[indsFd,:]
-    opt2100_noFd = opt2100[indsNoFd,:]
-
-    lev2100_Fd = lev2100[indsFd,:]
-    lev2100_noFd = lev2100[indsNoFd,:]
-
-
-    lab1=vcat(fill("No Fast Dynamics",length(nofd_inds)))
-    lab2 = vcat(fill("Fast Dynamics",length(fd_inds)))
-
-    if noRetreat==false
-        lab3=vcat(fill("With Retreat",length(nofd_inds)))
-        lab4=vcat(fill("With Retreat",length(fd_inds)))
-    else
-        lab3=vcat(fill("No Retreat",length(nofd_inds)))
-        lab4=vcat(fill("No Retreat",length(fd_inds)))
-    end
-
-    dict1=Dict("npvFd"=>npvFd,"opt2050_Fd"=>opt2050_Fd,
-        "lev2050_Fd"=>lev2050_Fd,"opt2100_Fd"=>opt2100_Fd,
-        "lev2100_Fd"=>lev2100_Fd,"npvNoFd"=>npvNoFd,
-        "opt2050_noFd"=>opt2050_noFd,"lev2050_noFd"=>lev2050_noFd,
-        "opt2100_noFd"=>opt2100_noFd,"lev2100_noFd"=>lev2100_noFd)
-    #dict2=Dict("lsl2050fd"=> lsl2050fd,"lsl2050nofd"=>lsl2050nofd,"lsl2100fd"=>lsl2100fd,
-    #"lsl2100nofd"=>lsl2100nofd)
-
     for k in string.(keys(dict1))
         val = dict1[k]
-        if k in ["npvFd","npvNoFd","lsl2050fd","lsl2050nofd","lsl2100fd","lsl2100nofd"]
-            mn = mean(val,dims=1)'
-            sdev = std(val,dims=1)'
-            minval = minimum(val,dims=1)'
-            maxval = maximum(val,dims=1)'
-            pctl95 = [percentile(val[:,i],95) for i in 1:size(val)[2]]
-            pctl5 = [percentile(val[:,i],5) for i in 1:size(val)[2]]
-            med = median(val,dims=1)'
-
-            df = DataFrame([segNames mn med sdev minval maxval pctl95 pctl5], :auto)
-            names!(df,[:segment,:mean,:median,:stdev,:min,:max,:pct95,:pct5])
-            CSV.write("output/seg$(k)_stats_rcp$(rcp)_noRetreat$(noRetreat).csv",df)
-        else
-            md = [mode(val[:,i]) for i in 1:size(val)[2]]
-            minval = minimum(val,dims=1)'
-            maxval = maximum(val,dims=1)'
-            df = DataFrame([segNames md minval maxval], :auto)
-            names!(df,[:segment,:modalOption,:minOpt,:maxOpt])
-            CSV.write("output/segAdapt_stats_rcp$(rcp)_noRetreat$(noRetreat)_$(k).csv",df)
-        end
+        md = [mode(val[:,i]) for i in 1:size(val)[2]]
+        minval = minimum(val,dims=1)'
+        maxval = maximum(val,dims=1)'
+        df = DataFrame([segNames md minval maxval], :auto)
+        names!(df,[:segment,:modalOption,:minOpt,:maxOpt])
+        CSV.write("output/segAdapt_stats_rcp$(rcp)_noRetreat$(noRetreat)_$(k).csv",df)
     end
 end
 
@@ -145,8 +83,6 @@ end
 function plotMap(tabstr)
     ciamLonLat = CSV.read("data/diva_segment_latlon.csv")
     df = CSV.read(tabstr)
-
-
 end
 
 # Function: plot costs on map (5-95%, outliers as insets)
