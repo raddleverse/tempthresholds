@@ -137,7 +137,7 @@ function get_lonlat(segIDs)
     if segIDs == false
         filt = DataFrame(ciamlonlat)
     else
-        filt = ciamlonlat |> @filter(_.segid in segIDs) |> Datarame
+        filt = ciamlonlat |> @filter(_.segid in segIDs) |> DataFrame
     end
 
     sort!(filt, :segments)
