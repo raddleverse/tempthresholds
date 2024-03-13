@@ -67,6 +67,14 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
                             fixed = adaptRegime[:fixed], noRetreat = adaptRegime[:noRetreat],
                             allowMaintain = adaptRegime[:allowMaintain], popinput = adaptRegime[:popval],
                             surgeoption = adaptRegime[:surgeoption])
+ 
+    # TODO do we want these? They are the central values as used in run_ciam_mcs.jl
+    update_param!(:slrcost, :movefactor, 1) # From Diaz (2016); incorporates communication with Mendelsohn and Anthoff and Tol (2014)
+    update_param!(:slrcost, :dvbm, 5.376)    # Updated to 2010USD from FUND
+    update_param!(:slrcost, :vslel, 0.47)     # From Viscusi and Aldy (2003)
+    update_param!(:slrcost, :vslmult, 200)      # From FUND (originally Cline (1992))
+    update_param!(:slrcost, :wvel, 1.16)      # From Brander et al (2006)
+    update_param!(:slrcost, :wvpdl, 0.47)     # From Brander et al (2006)
 
     # get the segments and their corresponding World Bank regions
     dfSR = CSV.read("../data/segments_regions_WB.csv", DataFrame)
@@ -75,23 +83,62 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
     # unique World Bank regions
     wbrgns = unique(dfSR[!,"global region"])
 
-    global outtrials = DataFrame()
-    global outts = DataFrame()
-    globalNPV = zeros(num_ens)
-    regionNPV = zeros(num_ens, length(wbrgns))
-    regionNPV1 = zeros(num_ens, length(wbrgns)) # for first time step optimal costs, to subtract off later
+    # array of distributions, could also pre-compute these if you want
+    distribs = (
+        # (movefactor, Truncated(Normal(1,1),0.5,3) # From Diaz (2016); incorporates communication with Mendelsohn and Anthoff and Tol (2014)
+        (param = :dvbm, distrib = Truncated(Normal(5.376,2.688),0.0,Inf)), # Updated to 2010USD from FUND
+        (param = :vslel, distrib =Truncated(Normal(0.47,0.15),0.0,Inf)), # From Viscusi and Aldy (2003)
+        (param = :vslmult, distrib =Truncated(Normal(200,100),0.0,Inf)), # From FUND (originally Cline (1992))
+        (param = :wvel, distrib =Truncated(Normal(1.16, 0.46),0.0,Inf)), # From Brander et al (2006)
+        (param = :wvpdl, distrib =Truncated(Normal(0.47,0.12),0.0,1.0)) # From Brander et al (2006)
+    )
+
+    # preallocate arrays
+    if vary_ciam
+        outtrials = Array{Float64}(undef, num_ens, length(distribs)) # array of random CIAM parameter draws
+    end 
+    outts = DataFrame() # Dataframe of outputs, TODO performance would improve if this was an Array but fine for now
+    globalNPV = Array{Float64}(undef, num_ens)
+    regionNPV = Array{Float64}(undef, num_ens, length(wbrgns))
+    regionNPV1 = Array{Float64}(undef, num_ens, length(wbrgns)) # for first time step optimal costs, to subtract off later
+
+    run(m) # Run the model once so we instantiate a model instance to modify
+
+    p = Progress(num_ens; showspeed=true)
 
     for i = 1:num_ens
-        update_param!(m,:slrcost, :lslr,lslr[i,:,:])
 
-        res = run_ciam_mcs(m, outputdir; trials = 1, ntsteps = adaptRegime[:t], save_trials = false, vary_ciam = vary_ciam)
-        res1 = DataFrame([res.current_data])
-        global outtrials = [outtrials;res1]
+        # Progress Meter
+        next!(p; showvalues = [(:iter,i)])
 
+        # Work with the model instance when updating parameters instead of the 
+        # model def to prevent rebuilding, this would be handled with the Mimi
+        # MCS framework using an empirical distribution for lslr but this keeps
+        # your general structure
+
+        update_param!(m.mi,:slrcost, :lslr,view(lslr, i,:,:)) # use a view to prevent allocation from slices
+
+        if vary_ciam
+            for (j, distrib) in enumerate(distribs)
+                draw = rand(distrib.distrib)
+                outtrials[i,j] = draw
+                update_param!(m.mi, :slrcost, distrib.param, draw)
+            end
+        end
+
+        # Run the model again, noting it will not rebuild because we updated 
+        # m.mi under the hood
+        run(m)
+
+        # Peformance TODO This section is slow because the getTimeSeries
+        # function is complex, and less importantly we are appending to a DataFrame
+        # instead of a preallocated Array, but leavign it alone for now.
         ts = MimiCIAM.getTimeSeries(m,i,rgns=false,sumsegs="global")
-        global outts = [outts;ts]
+        append!(outts, ts)
+
         globalNPV[i] = m[:slrcost,:NPVOptimalTotal]
 
+        # Performance TODO: does this need to happen within the loop? Not a priority it is fast
         # get the segments for each region and aggregate
         for rgn in wbrgns
             segIDs_rgn = filter(:"global region" => ==(rgn), dfSR)[!,"ids"]
@@ -119,7 +166,13 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
     outrgnname = joinpath(postprocessing_outputdir, "regionnpv_$(runname).csv")
     outtsname= joinpath(postprocessing_outputdir, "globalts_$(rcp)_$(runname).csv")
 
-    CSV.write(outtrialsname, outtrials)
+    # Turn outtrials into a DataFrame and save if vary_ciam was true
+    if vary_ciam 
+        outtrials_df = DataFrame(outtrials,[distrib.param for distrib in distribs])
+        insertcols!(outtrials_df, 1, :ens => i)
+        CSV.write(outtrialsname, outtrials)
+    end
+
     procGlobalOutput(globalNPV,gmsl,temps_norm_2100,ensInds,trial_params[:brickfile],rcp,adaptRegime[:noRetreat],outnpvname)
     CSV.write(outtsname, outts)
     CSV.write(outrgnname, outregionNPV)
