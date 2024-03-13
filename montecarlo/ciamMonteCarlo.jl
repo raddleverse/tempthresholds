@@ -69,12 +69,12 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
                             surgeoption = adaptRegime[:surgeoption])
  
     # TODO do we want these? They are the central values as used in run_ciam_mcs.jl
-    update_param!(:slrcost, :movefactor, 1) # From Diaz (2016); incorporates communication with Mendelsohn and Anthoff and Tol (2014)
-    update_param!(:slrcost, :dvbm, 5.376)    # Updated to 2010USD from FUND
-    update_param!(:slrcost, :vslel, 0.47)     # From Viscusi and Aldy (2003)
-    update_param!(:slrcost, :vslmult, 200)      # From FUND (originally Cline (1992))
-    update_param!(:slrcost, :wvel, 1.16)      # From Brander et al (2006)
-    update_param!(:slrcost, :wvpdl, 0.47)     # From Brander et al (2006)
+    update_param!(m, :slrcost, :movefactor, 1) # From Diaz (2016); incorporates communication with Mendelsohn and Anthoff and Tol (2014)
+    update_param!(m, :slrcost, :dvbm, 5.376)    # Updated to 2010USD from FUND
+    update_param!(m, :slrcost, :vslel, 0.47)     # From Viscusi and Aldy (2003)
+    update_param!(m, :slrcost, :vslmult, 200)      # From FUND (originally Cline (1992))
+    update_param!(m, :slrcost, :wvel, 1.16)      # From Brander et al (2006)
+    update_param!(m, :slrcost, :wvpdl, 0.47)     # From Brander et al (2006)
 
     # get the segments and their corresponding World Bank regions
     dfSR = CSV.read("../data/segments_regions_WB.csv", DataFrame)
