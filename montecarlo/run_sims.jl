@@ -10,6 +10,7 @@ using NetCDF
 using DataFrames
 using Distributions
 using Dates
+using ProgressMeter
 
 include("ciamMonteCarlo.jl")
 include("defmcs.jl")
