@@ -125,6 +125,52 @@ function get_brickGMSL_zip(gmslfile::String, rcp::Union{String, Number})
 end
 
 """
+    get_brickGMSL_zip_Darnell(gmslfile::String)
+
+Get brick ensemble members for specified RCP from zip file URL or local path,
+and return time x ens arrays for brick components.
+Modified (8 March 2024) by Tony Wong to ingest Darnell et al 2024 ensemble,
+available at the Zenodo link below.
+"""
+function get_brickGMSL_zip_Darnell(gmslfile::String)
+
+    results_dir = joinpath(@__DIR__, "..", "data", "results")
+
+    filepath_AIS = joinpath(results_dir,"default/antarctic.csv")
+    filepath_GSIC = joinpath(results_dir,"default/gsic.csv")
+    filepath_GIS = joinpath(results_dir,"default/greenland.csv")
+    filepath_TE = joinpath(results_dir,"default/thermal_expansion.csv")
+    filepath_GMSL = joinpath(results_dir,"default/gmslr.csv")
+    filepath_temp = joinpath(results_dir,"default/temperature.csv")
+    filepath_LWS = joinpath(results_dir,"default/lw_storage.csv")
+
+    if !isfile(filepath_AIS) | !isfile(filepath_GSIC) | !isfile(filepath_GIS) |
+       !isfile(filepath_TE) | !isfile(filepath_GMSL) | !isfile(filepath_LWS) |
+       !isfile(filepath_temp)
+        url = "https://zenodo.org/records/10373090/files/ensemble_output.zip"
+        download(url, gmslfile)
+        isdir(results_dir) || mkpath(results_dir)
+        run(pipeline(`unzip $(gmslfile) -d $(results_dir)`));
+    end
+
+    # do the first one a bit different, so we can pull the years out
+    csvAIS = CSV.read(filepath_AIS,DataFrame)
+    btime = [parse(Int, names(csvAIS)[t]) for t in 1:length(names(csvAIS))]
+    brAIS = transpose(Matrix(csvAIS))
+    # the rest we can convert to matrices straightaway
+    brGSIC = transpose(Matrix(CSV.read(filepath_GSIC,DataFrame)))
+    brGIS = transpose(Matrix(CSV.read(filepath_GIS,DataFrame)))
+    brTE = transpose(Matrix(CSV.read(filepath_TE,DataFrame)))
+    brGMSL = transpose(Matrix(CSV.read(filepath_GMSL,DataFrame)))
+    brTemp = transpose(Matrix(CSV.read(filepath_temp,DataFrame)))
+    brLWS = transpose(Matrix(CSV.read(filepath_LWS,DataFrame)))
+    
+    return btime, brAIS, brGSIC, brGIS, brTE, brLWS, brGMSL, brTemp
+
+end
+
+
+"""
     get_lonlat(segIDs)
 
 Get CIAM lonlat tuples for specified segIDs, segID order does not matter; will sort
@@ -371,7 +417,8 @@ function brick_lsl(rcp,segIDs,brickfile,n,low=5,high=95,ystart=2010,yend=2100,ts
     # HERE - if you want to use a different set of SLR projections, or projections
     # that are stored in a different format, a new get_brickGMSL_xxx might be needed
     #brickGMSL = get_brickGMSL_rdata(brickfile,rcp)
-    brickGMSL = get_brickGMSL_zip(brickfile, rcp)
+    #brickGMSL = get_brickGMSL_zip(brickfile, rcp)
+    brickGMSL = get_brickGMSL_zip_Darnell(brickfile)
     brickEnsInds = choose_ensemble_members(brickGMSL[1],brickGMSL[7],n,low,high,yend,ensInds)
     lonlat = get_lonlat(segIDs)
     (lsl,gmsl) = downscale_brick(brickGMSL, lonlat, brickEnsInds, ystart, yend, tstep)

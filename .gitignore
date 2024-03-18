@@ -1,3 +1,7 @@
+figures/*
+*.zip
 output/MonteCarlo/SSP*
+data/results/*
 data/lslr/*
 .vscode*
+scratch*

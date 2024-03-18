@@ -10,6 +10,7 @@ using NetCDF
 using DataFrames
 using Distributions
 using Dates
+using ProgressMeter
 
 include("ciamMonteCarlo.jl")
 include("defmcs.jl")
@@ -17,7 +18,7 @@ include("run_ciam_mcs.jl")
 include("brickLSL.jl")
 include("processResults.jl")
 
-brickfile = "sneasybrick_projections_csv.zip"
+brickfile = "10373090.zip" # Darnell et al ensemble, zip file from Zenodo
 outputdir = joinpath(@__DIR__, "..", "output", "MonteCarlo")
 isdir(outputdir) || mkpath(outputdir)
 
@@ -26,10 +27,10 @@ ssp_files = Dict(1 => "IIASAGDP_SSP1_v9_130219",
                  3 => "IIASAGDP_SSP3_v9_130219",
                  4 => "IIASAGDP_SSP4_v9_130219",
                  5 => "IIASAGDP_SSP5_v9_130219")
-popinput = 0                          # population density input data (only 0 is supported currently)
-ssp_rcp_scenarios = [(1,26), (2,45), (4,60), (5,85)]  # what combinations of SSP (first) and RCP (second)?
-nensemble = 2500                      # how many ensemble members for the Monte Carlo?
-surgeoption = 0  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 1 = GTSR-corrected D-C; 2 = GTSR nearest data points)
+popinput = 0                        # population density input data (only 0 is supported currently)
+ssp_rcp_scenarios = [(2,45)]        # what combinations of SSP (first) and RCP (second)?
+nensemble = 1000                      # how many ensemble members for the Monte Carlo?
+surgeoption = 2  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 1 = GTSR-corrected D-C; 2 = GTSR nearest data points)
 
 for (ssp, rcp) in ssp_rcp_scenarios
 
@@ -80,7 +81,7 @@ for (ssp, rcp) in ssp_rcp_scenarios
     # vary SLR but not CIAM parameters
     trial_params[:low] = 0
     trial_params[:high] = 100
-    runname = string("SSP",init_settings[:ssp_simplified],"_BRICK",init_settings[:rcp],"_global_varySLR")
+    runname = string("SSP",init_settings[:ssp_simplified],"_BRICK",init_settings[:rcp],"_global_varySLR-Darnell")
     runTrials(init_settings[:rcp], init_settings[:ssp_simplified], trial_params, adaptRegime1, outputdir, init_file, vary_slr=true, vary_ciam=false, runname=runname)
 
     tend = now()
