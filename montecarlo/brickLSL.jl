@@ -193,6 +193,28 @@ function get_lonlat(segIDs)
     return collect(zip(lons,lats))
 end
 
+
+"""
+    get_segnames(segIDs)
+
+Get CIAM segment names for specified segIDs, segID order does not matter; will sort
+tuples alphabetically by segment name
+"""
+function get_segnames(segIDs)
+
+    ciamlonlat = CSV.read(joinpath(@__DIR__,"..","data","diva_segment_latlon.csv"), DataFrame)
+
+    if segIDs == false
+        filt = DataFrame(ciamlonlat)
+    else
+        filt = ciamlonlat |> @filter(_.segid in segIDs) |> DataFrame
+    end
+
+    sort!(filt, :segments)
+
+    return filt[!, :segments]
+end
+
 """
     choose_ensemble_members(time, ens, n, low, high, yend, ensInds)
 

@@ -37,6 +37,24 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
         segIDs = MimiCIAM.segStr_to_segID(subs)
     end
 
+    # Get non-climatic LSLR
+    # Years are 2010, 2020, ... , 2200
+    data_dir = joinpath(@__DIR__, "..", "data", "lslr")
+    lsl_nonclim = CSV.read(joinpath(data_dir, "lsl_rcp0_p50.csv"), DataFrame) |> DataFrame
+    lsl_nonclim_years = range(2010, stop=2200, length=20) |> collect
+
+    # Filter according to subset segments
+    # Will still have possibly too many time steps
+    if adaptRegime[:subset] != false
+        lsl_nonclim = lsl_nonclim[!, subs]
+    end
+
+    # Need to make sure that lsl_nonclim has same segment order as lslr (climatic, below) 
+    segnames = get_segnames(segIDs)
+    col_names = [i for i in names(lsl_nonclim) if string(i) in segnames]
+    col_names = sort(col_names)
+    lsl_nonclim = lsl_nonclim[!, col_names]
+
     # Load BRICK data
     lsl = brick_lsl(rcp, segIDs, trial_params[:brickfile], trial_params[:n], trial_params[:low],
                         trial_params[:high],trial_params[:ystart], trial_params[:yend],
