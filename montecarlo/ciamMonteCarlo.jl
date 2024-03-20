@@ -41,7 +41,7 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
     # Years are 2010, 2020, ... , 2200
     data_dir = joinpath(@__DIR__, "..", "data", "lslr")
     lsl_nonclim = CSV.read(joinpath(data_dir, "lsl_rcp0_p50.csv"), DataFrame) |> DataFrame
-    lsl_nonclim_years = range(2010, stop=2200, length=20) |> collect
+    years_nonclim = range(2010, stop=2200, length=20) |> collect
 
     # Filter according to subset segments
     # Will still have possibly too many time steps
@@ -56,9 +56,13 @@ function runTrials(rcp, ssp, trial_params, adaptRegime, outputdir, init_filepath
     lsl_nonclim = lsl_nonclim[!, col_names]
 
     # Load BRICK data
-    lsl = brick_lsl(rcp, segIDs, trial_params[:brickfile], trial_params[:n], trial_params[:low],
-                        trial_params[:high],trial_params[:ystart], trial_params[:yend],
-                        trial_params[:tstep], false)
+    # - segIDs will subset (if needed), and lsl_nonclim already subsetted
+    # - years_nonclim and lsl_nonclim go into brick_lsl, to be trimmed and added
+    # - lsl that comes out (lsl[1]) will include lsl_nonclim added
+    lsl = brick_lsl(rcp, segIDs, trial_params[:brickfile], trial_params[:n], lsl_nonclim, 
+                    years_nonclim, trial_params[:low], trial_params[:high],
+                    trial_params[:ystart], trial_params[:yend],
+                    trial_params[:tstep], false)
     if vary_slr
         lslr    =lsl[1]
         gmsl    =lsl[2]

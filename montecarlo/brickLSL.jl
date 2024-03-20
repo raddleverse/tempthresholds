@@ -279,12 +279,14 @@ input arguments:
 
 brickcomps - BRICK components (time x ens matrices corresponding to brick gmsl components)
 lonlat - vector of (lon,lat) tuples, sorted corresp to segment name alphabetical order
+lsl_nonclim - nonclimatic LSLR at each CIAM segment
+years_nonclim - what year timesteps do the nonclimatic LSLR data corresond to
 Output:
 lsl_out: ens x time x segment array of local sea levels, sorted in alphabetical order by segment name
 GMSL: global mean sea levels corresponding to local sea level arrays (time x ens)
 """
-function downscale_brick(brickcomps, lonlat, ensInds, ystart=2010, yend=2100, tstep=10)
-    # To do - check with vectors of lat, lon
+function downscale_brick(brickcomps, lonlat, ensInds, lsl_nonclim, years_nonclim, ystart=2010, yend=2100, tstep=10)
+    # Get fingerprints from Slangen et al 2014
     (fplat,fplon,fpAIS,fpGSIC,fpGIS) = get_fingerprints()
     (btime,AIS,GSIC,GIS,TE,LWS,GMSL) = brickcomps
 
@@ -330,6 +332,11 @@ function downscale_brick(brickcomps, lonlat, ensInds, ystart=2010, yend=2100, ts
         return nothing
     end
 
+    # Find indices of time period of interest within the nonclimatic LSLR
+    tinds_nonclim = findall(x -> x .>= ystart && x .<=yend, years_nonclim)
+    # Trim to only period of interest; already assuemd to be normalized relative to 2000
+    lsl_nonclim = lsl_nonclim[tinds_nonclim,:]
+
     for f in 1:length(lonlat) # Loop through lonlat tuples
 
         lon = lonlat[f][1]
@@ -353,8 +360,8 @@ function downscale_brick(brickcomps, lonlat, ensInds, ystart=2010, yend=2100, ts
         fpAIS_loc = mean(fpAIS_flat[isnan.(fpAIS_flat).==false],dims=1)[1]
         fpGSIC_loc = mean(fpGSIC_flat[isnan.(fpGSIC_flat).==false],dims=1)[1]
         fpGIS_loc = mean(fpGIS_flat[isnan.(fpGIS_flat).==false],dims=1)[1]
-        fpTE_loc = 1.0
-        fpLWS_loc=1.0
+        fpTE_loc  = 1.0
+        fpLWS_loc = 1.0
 
         # Keep searching nearby lat/lon values if fingerprint value is NaN unless limit is hit
         inc =1
@@ -414,7 +421,8 @@ function downscale_brick(brickcomps, lonlat, ensInds, ystart=2010, yend=2100, ts
                 # CIAM - LSL should be sea-level change relative to year 2000
                 lsl_norm = fpGIS_loc * GIS_norm[n] + fpAIS_loc * AIS_norm[n] + fpGSIC_loc * GSIC_norm[n] +
                            fpTE_loc * TE_norm[n] + fpLWS_loc * LWS_norm[n]
-                lsl_out[n, :, f] = lsl_out[n, :, f] .- lsl_norm
+                # Adding on the nonclimatic lslr
+                lsl_out[n, :, f] = lsl_out[n, :, f] .- lsl_norm .+ lsl_nonclim[:,f]
             end
         else
             lsl_out[1, :, f] = fpGIS_loc * GIS[:] + fpAIS_loc * AIS[:] + fpGSIC_loc * GSIC[:] +
@@ -422,7 +430,8 @@ function downscale_brick(brickcomps, lonlat, ensInds, ystart=2010, yend=2100, ts
             # CIAM - LSL should be sea-level change relative to year 2000
             lsl_norm = fpGIS_loc * GIS_norm + fpAIS_loc * AIS_norm + fpGSIC_loc * GSIC_norm +
                        fpTE_loc * TE_norm + fpLWS_loc * LWS_norm
-            lsl_out[1, :, f] = lsl_out[1, :, f] .- lsl_norm
+            # Adding on the nonclimatic lslr
+            lsl_out[1, :, f] = lsl_out[1, :, f] .- lsl_norm .+ lsl_nonclim[:,f]
         end
 
     end # End lonlat tuple
@@ -435,7 +444,7 @@ end
 
 Driver function to downscale BRICK gmsl for specified segments
 """
-function brick_lsl(rcp,segIDs,brickfile,n,low=5,high=95,ystart=2010,yend=2100,tstep=10,ensInds=false)
+function brick_lsl(rcp,segIDs,brickfile,n,lsl_nonclim,years_nonclim,low=5,high=95,ystart=2010,yend=2100,tstep=10,ensInds=false)
     # HERE - if you want to use a different set of SLR projections, or projections
     # that are stored in a different format, a new get_brickGMSL_xxx might be needed
     #brickGMSL = get_brickGMSL_rdata(brickfile,rcp)
@@ -443,7 +452,7 @@ function brick_lsl(rcp,segIDs,brickfile,n,low=5,high=95,ystart=2010,yend=2100,ts
     brickGMSL = get_brickGMSL_zip_Darnell(brickfile)
     brickEnsInds = choose_ensemble_members(brickGMSL[1],brickGMSL[7],n,low,high,yend,ensInds)
     lonlat = get_lonlat(segIDs)
-    (lsl,gmsl) = downscale_brick(brickGMSL, lonlat, brickEnsInds, ystart, yend, tstep)
+    (lsl,gmsl) = downscale_brick(brickGMSL, lonlat, brickEnsInds, lsl_nonclim, years_nonclim, ystart, yend, tstep)
     temps = brickGMSL[8][:,brickEnsInds]
     years = brickGMSL[1]
 
