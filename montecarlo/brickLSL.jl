@@ -147,7 +147,8 @@ function get_brickGMSL_zip_Darnell(gmslfile::String)
     if !isfile(filepath_AIS) | !isfile(filepath_GSIC) | !isfile(filepath_GIS) |
        !isfile(filepath_TE) | !isfile(filepath_GMSL) | !isfile(filepath_LWS) |
        !isfile(filepath_temp)
-        url = "https://zenodo.org/records/10373090/files/ensemble_output.zip"
+        #url = "https://zenodo.org/records/10373090/files/ensemble_output.zip" # original
+        url = "https://zenodo.org/records/11397684/files/ensemble_output.zip" # updated, new
         download(url, gmslfile)
         isdir(results_dir) || mkpath(results_dir)
         run(pipeline(`unzip $(gmslfile) -d $(results_dir)`));

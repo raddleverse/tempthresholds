@@ -18,7 +18,7 @@ include("run_ciam_mcs.jl")
 include("brickLSL.jl")
 include("processResults.jl")
 
-brickfile = "10373090.zip" # Darnell et al ensemble, zip file from Zenodo
+brickfile = "11397684.zip" # Darnell et al ensemble, zip file from Zenodo
 outputdir = joinpath(@__DIR__, "..", "output", "MonteCarlo")
 isdir(outputdir) || mkpath(outputdir)
 
@@ -30,7 +30,7 @@ ssp_files = Dict(1 => "IIASAGDP_SSP1_v9_130219",
 popinput = 0                        # population density input data (only 0 is supported currently)
 ssp_rcp_scenarios = [(2,45)]        # what combinations of SSP (first) and RCP (second)?
 nensemble = 5000                    # how many ensemble members for the Monte Carlo?
-surgeoption = 0  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 1 = GTSR-corrected D-C; 2 = GTSR nearest data points)
+surgeoption = 2  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 1 = GTSR-corrected D-C; 2 = GTSR nearest data points)
 
 for (ssp, rcp) in ssp_rcp_scenarios
 
