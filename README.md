@@ -1,4 +1,4 @@
-# Coastal Adaptation Costs and Damages at Different Global Warming Thresholds
+# Coastal Adaptation and Damage Costs at Different Global Warming Thresholds
 
 This repository contains code underlying the analysis of a probabilistic ensemble of carbon cycle, temperature, sea level, and coastal adaptation costs/damages. The work is detailed in a preprint [here](https://osf.io/preprints/osf/m97rq), and this link will be updated as the manuscript moves through peer review.
 
@@ -25,21 +25,9 @@ If you obtained this repository via Zenodo, then the underlying carbon cycle-tem
 
 ## Reproduction Instructions
 
-To reproduce the analysis of Wong et al 2024, do the following.
+To reproduce the analysis of Wong et al 2025, do the following.
 
 ### Main text results
-
-Run the Julia script `run_sims.jl` with:
-
-```
-ssp_rcp_scenarios = [(2,45)]        # what combinations of SSP (first) and RCP (second)?
-nensemble = 5000                    # how many ensemble members for the Monte Carlo?
-surgeoption = 2  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 1 = GTSR-corrected D-C; 2 = GTSR nearest data points)
-```
-
-Once completed (in Julia v1.10, takes about 3 hours), the analysis and plots are done within the Jupyter notebook (Python) `analysis_darnell.ipynb`.
-
-### Supplemental result: SSP4
 
 Run the Julia script `run_sims.jl` with:
 
@@ -51,12 +39,24 @@ surgeoption = 2  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 
 
 Once completed (in Julia v1.10, takes about 3 hours), the analysis and plots are done within the Jupyter notebook (Python) `analysis_darnell.ipynb`.
 
-### Supplemental result: DINAS-COAST instead of GTSR for storm tide exposure levels
+### Supplemental result: SSP2
 
 Run the Julia script `run_sims.jl` with:
 
 ```
 ssp_rcp_scenarios = [(2,45)]        # what combinations of SSP (first) and RCP (second)?
+nensemble = 5000                    # how many ensemble members for the Monte Carlo?
+surgeoption = 2  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 1 = GTSR-corrected D-C; 2 = GTSR nearest data points)
+```
+
+Once completed (in Julia v1.10, takes about 3 hours), the analysis and plots are done within the Jupyter notebook (Python) `analysis_darnell.ipynb`.
+
+### Supplemental result: DINAS-COAST instead of GTSR for storm tide exposure levels
+
+Run the Julia script `run_sims.jl` with:
+
+```
+ssp_rcp_scenarios = [(4,60)]        # what combinations of SSP (first) and RCP (second)?
 nensemble = 5000                    # how many ensemble members for the Monte Carlo?
 surgeoption = 0  # which surge data sets to use (0 = original CIAM/DINAS-COAST; 1 = GTSR-corrected D-C; 2 = GTSR nearest data points)
 ```
